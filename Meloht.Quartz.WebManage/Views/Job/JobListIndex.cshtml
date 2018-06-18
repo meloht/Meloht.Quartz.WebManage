@@ -1,0 +1,642 @@
+﻿
+
+@{
+    ViewData["Title"] = "任务列表";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h4>任务列表</h4>
+<div class="panel-body" style="padding: 5px 0px 0px 0px">
+    <div class="panel panel-default" style="margin-bottom: 5px">
+        <div class="panel-heading">查询条件</div>
+        <div class="panel-body">
+            <div class="form-inline" role="form">
+                <div class="form-group">
+                    <label class="control-label" for="txt_job_name">任务名</label>
+                    <input type="text" class="form-control" id="txt_job_name">
+                </div>
+                <button id="btn_query" type="button" class="btn btn-primary">
+                    <span class="glyphicon glyphicon-search" aria-hidden="true"></span>查询
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="toolbar" class="form-inline">
+        <button type="button" id="btn_add" class="btn btn-default">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>创建任务
+        </button>
+
+    </div>
+    <table id="tb_job"></table>
+</div>
+
+<div id="modal_add" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">关闭</span>
+                </button>
+                <h4 class="modal-title">创建任务</h4>
+            </div>
+            <form id="job_create_view">
+                <div class="modal-body" id="detail_content">
+
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" id="btn_add_save" class="btn btn-primary">保存</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
+
+<div id="modal_update" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">关闭</span>
+                </button>
+                <h4 class="modal-title">修改任务</h4>
+            </div>
+            <form id="job_update_view">
+                <div class="modal-body" id="update_content">
+
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" id="btn_update_save" class="btn btn-primary">保存</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
+
+
+<div id="modal_add_para" class="modal fade" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                    <span class="sr-only">关闭</span>
+                </button>
+                <h4 class="modal-title">任务参数</h4>
+            </div>
+            <form id="job_para_view">
+                <div class="modal-body">
+                    <div class="form-horizontal">
+                        <div class="form-group">
+                            <label class="control-label col-md-2" for="txtParaKey">参数名</label>
+                            <div class="col-md-8">
+                                <input type="text" class="form-control" name="txtParaKey" id="txtParaKey" placeholder="key" data-val="true" data-val-required="参数名不能为空">
+                                <span class="text-danger field-validation-valid" data-valmsg-for="txtParaKey" data-valmsg-replace="true"></span>
+                            </div>
+
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-md-2" for="txtParaValue">参数值</label>
+                            <div class="col-md-8">
+                                <input type="text" class="form-control" name="txtParaValue" id="txtParaValue" value="" placeholder="value">
+
+                            </div>
+                        </div>
+                        <input id="para_row_index" type="hidden" />
+                        <input id="is_add_para" type="hidden" />
+                    </div>
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" id="btn_para_save" class="btn btn-primary">保存</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+
+
+
+
+@section Scripts
+    {
+    <script type="text/javascript">
+        var $table = $("#tb_job");
+        var $btnAdd = $("#btn_add");
+        var $btnQuery = $("#btn_query");
+
+        var $tbnAddSaveJob = $("#btn_add_save");
+        var $modal = $("#modal_add");
+        var $modalPara = $("#modal_add_para");
+        var $btnParaSave = $("#btn_para_save");
+        var $IsAddPara = $("#is_add_para");
+        var $paraRowIndex = $("#para_row_index");
+
+        var $modalUpdate = $("#modal_update");
+        var $btnUpdateSave = $("#btn_update_save");
+
+
+        function getToken() {
+            //获取防伪标记
+            var token = $('@Html.AntiForgeryToken()').val();
+            return token;
+        };
+
+        function opFormatter(value, row) {
+
+            return [
+                '<a class="stopjob" href="javascript:;" title="暂停任务"><i class="glyphicon glyphicon-pause"></i>暂停</a> ',
+                ' <a class="resumejob" href="javascript:;" title="恢复任务"><i class="glyphicon glyphicon-play"></i>恢复</a> ',
+                ' <a class="updatejob" href="javascript:;" title="修改任务"><i class="glyphicon glyphicon-edit"></i>修改</a> ',
+                ' <a class="deletejob" href="javascript:;" title="删除任务"><i class="glyphicon glyphicon-remove-circle"></i>删除</a>',
+                ' <a class="runatoncejob" href="javascript:;" title="点击运行一次任务"><i class="glyphicon glyphicon-hand-down"></i>运行一次</a>'
+            ].join('');
+        };
+
+        function stateFormatter(value, row, index) {
+
+            var a = "";
+            if (value === -1) {
+                a = '<span class="label label-default">None</span>';
+            } else if (value === 0) {
+                a =
+                    '<span class="label label-success"><i class="glyphicon glyphicon-play" aria-hidden="true"></i>Normal</span>';
+            } else if (value === 1) {
+                a =
+                    '<span class="label label-info"><i class="glyphicon glyphicon-pause" aria-hidden="true"></i>Paused</span>';
+            } else if (value === 2) {
+                a =
+                    '<span class="label label-primary"><i class="glyphicon glyphicon-ok" aria-hidden="true"></i>Complete</span>';
+            } else if (value === 3) {
+                a =
+                    '<span class="label label-danger"><i class="glyphicon glyphicon-remove" aria-hidden="true"></i>Error</span>';
+            } else if (value === 4) {
+                a =
+                    '<span class="label label-warning"><i class="glyphicon glyphicon-time" aria-hidden="true"></i>Blocked</span>';
+            }
+            return a;
+        };
+
+        function paraOpFormatter(value, row, index) {
+            return [
+                '<a class="updatepara" href="javascript:;" title="修改参数"><i class="glyphicon glyphicon-edit"></i>修改</a> ',
+                ' <a class="delpara" href="javascript:;" title="删除参数"><i class="glyphicon glyphicon-remove-circle"></i>删除</a> '
+            ].join('');
+        };
+
+        window.paraOpEvents = {
+            'click .updatepara': function(e, value, row, index) {
+                updateParaShowModal(row.key, row.value, index);
+            },
+            'click .delpara': function(e, value, row, index) {
+                deleteParaRow(row.key);
+            }
+        };
+
+        window.actionEvents = {
+            'click .stopjob': function(e, value, row) {
+                stopJob(row.jobName);
+            },
+            'click .resumejob': function(e, value, row) {
+                resumeJob(row.jobName);
+            },
+            'click .updatejob': function(e, value, row) {
+
+                showUpdateModal(row.jobName, row.jobGroupName);
+
+            },
+            'click .deletejob': function(e, value, row) {
+                deleteJob(row.jobName);
+            },
+            'click .runatoncejob': function(e, value, row) {
+                runOnceTime(row.jobName, row.jobGroupName);
+            }
+        };
+
+        function tableQueryParam(params) {
+            var temp = {
+                //这里的键的名字和控制器的变量名必须一直，这边改动，控制器也需要改成一样的DepartName
+                Limit: params.limit, //页面大小
+                Offset: params.offset, //页码
+                JobName: $("#txt_job_name").val()
+
+            };
+            return temp;
+        };
+
+        function getPostData(jobname) {
+            //获取防伪标记
+            var token = getToken();
+            var data = {
+                "__RequestVerificationToken": token,
+                jobName: jobname
+            };
+
+            return data;
+        };
+
+        function stopJob(jobname) {
+            var index = layer.confirm('确认要暂停任务[' + jobname + ']吗？',
+                {
+                    btn: ['确认', '取消'] //按钮
+                },
+                function() {
+                    var data = getPostData(jobname);
+                    appcomm.ajaxSubmit("/Job/PauseJob",
+                        data,
+                        null,
+                        function() {
+                            layer.close(index);
+                        },
+                        refreshTable);
+
+                });
+        };
+
+        function resumeJob(jobname) {
+            var index = layer.confirm('确认要恢复任务[' + jobname + ']吗？',
+                {
+                    btn: ['确认', '取消'] //按钮
+                },
+                function() {
+                    var data = getPostData(jobname);
+                    appcomm.ajaxSubmit("/Job/ResumeJob",
+                        data,
+                        null,
+                        function() {
+                            layer.close(index);
+                        },
+                        refreshTable);
+
+                });
+        };
+
+        function deleteJob(jobname) {
+            var index = layer.confirm('确认要删除任务[' + jobname + ']吗？',
+                {
+                    btn: ['确认', '取消'] //按钮
+                },
+                function() {
+                    var data = getPostData(jobname);
+                    appcomm.ajaxSubmit("/Job/DeleteJob",
+                        data,
+                        null,
+                        function() {
+                            layer.close(index);
+                        },
+                        refreshTable);
+
+                });
+        };
+
+        function runOnceTime(jobname,groupname) {
+            var index = layer.confirm('确认要运行一次任务[' + jobname + ']吗？',
+                {
+                    btn: ['确认', '取消'] //按钮
+                },
+                function () {
+                    var token = getToken();
+                    var data = {
+                        "__RequestVerificationToken": token,
+                        jobName: jobname,
+                        groupName: groupname
+                    };
+
+                    appcomm.ajaxSubmit("/Job/RunAtOnce",
+                        data,
+                        null,
+                        function() {
+                            layer.close(index);
+                        },
+                        refreshTable);
+
+                });
+        };
+
+        function showUpdateModal(jobName, group) {
+
+            var url = "/Job/GetUpdateJobView?jobName=" + jobName + "&group=" + group;
+
+            $.get(url,
+                function (data, status) {
+                    $("#detail_content").html('');
+                    $("#update_content").html('');
+                    $("#update_content").html(data);
+
+                    appcomm.refreshFormValidator($("#job_update_view"));
+
+                    initTableParam();
+
+                    var purl = '/Job/GetJobParaList?jobName=' + jobName + '&groupName=' + group;
+                    $.get(purl, function (res) {
+                        $("#tb_param").bootstrapTable('load', res);
+                        getParaTbString();
+                    });
+
+                    $("#btn_para_add").click(addParaShowModal);
+
+                    $modalUpdate.modal('show');
+
+                });
+
+        };
+
+        function updateJobPost() {
+            var form = $("#job_update_view");
+
+            appcomm.buttonsubmit(form,
+                "/Job/ModifyJob",
+                function() { $btnUpdateSave.attr("disabled", true) },
+                null,
+                function() {
+                    $modalUpdate.modal('hide');
+                    $btnUpdateSave.attr("disabled", false);
+                    refreshTable();
+
+                });
+        };
+
+
+        function initTable() {
+            $table.bootstrapTable({
+                toolbar: "#toolbar",
+                url: '/Job/GetJobList', //请求后台的URL（*）
+                method: 'post', //请求方式（*）
+                contentType: "application/x-www-form-urlencoded",
+                striped: true, //是否显示行间隔色
+                cache: false, //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination: true, //是否显示分页（*）
+                sortable: false, //是否启用排序
+                sortOrder: "asc", //排序方式
+                queryParams: tableQueryParam, //传递参数（*）
+                sidePagination: "server", //分页方式：client客户端分页，server服务端分页（*）
+                pageNumber: 1, //初始化加载第一页，默认第一页
+                pageSize: appcomm.pageSize, //每页的记录行数（*）
+                pageList: appcomm.pageList, //可供选择的每页的行数（*）
+                search: false, //是否显示表格搜索，此搜索是客户端搜索，不会进服务端，所以，个人感觉意义不大
+                strictSearch: false,
+                showColumns: false, //是否显示所有的列
+                showRefresh: false, //是否显示刷新按钮
+                minimumCountColumns: 2, //最少允许的列数
+                clickToSelect: false, //是否启用点击选中行
+
+                uniqueId: "jobName", //每一行的唯一标识，一般为主键列
+                showToggle: false, //是否显示详细视图和列表视图的切换按钮
+                cardView: false, //是否显示详细视图
+                detailView: false, //是否显示父子表 AcadStateText
+                columns: [
+                    {
+                        field: 'jobName',
+                        title: '任务名'
+
+                    }, {
+                        field: 'jobGroupName',
+                        title: '任务分组'
+
+                    }, {
+                        field: 'jobType',
+                        title: '任务类型'
+
+                    },
+                    {
+                        field: 'jobData',
+                        title: '任务回调参数'
+
+                    },
+                    {
+                        field: 'cronExpression',
+                        title: '执行时间表达式'
+
+                    },
+                    {
+                        field: 'jobState',
+                        title: '任务状态',
+                        formatter: stateFormatter
+
+                    },
+                    {
+                        title: '操作',
+                        width:280,
+                        formatter: opFormatter,
+                        events: actionEvents
+
+                    }
+                ]
+            });
+        };
+
+        function paraSave() {
+
+            var form = $("#job_para_view");
+            if (!form.valid())
+                return;
+
+            var keyData = $("#txtParaKey").val();
+            var valueData = $("#txtParaValue").val();
+
+            var row = {
+                key: keyData,
+                value: valueData
+            };
+            var rows = [];
+            rows.push(row);
+
+            var tablePara = $("#tb_param");
+
+            var isAdd = $IsAddPara.val();
+            if (isAdd === "1") {
+                var roww = tablePara.bootstrapTable('getRowByUniqueId', keyData);
+                if (!roww) {
+                    tablePara.bootstrapTable('append', rows);
+                    tablePara.bootstrapTable('scrollTo', 'bottom');
+                } else {
+                    msgbox.warn("参数名重复！");
+                    return;
+                }
+
+
+            } else {
+                var indexNum = Number($paraRowIndex.val());
+                var item = tablePara.bootstrapTable('getData')[indexNum];
+
+                if (item.key !== keyData) {
+                    tablePara.bootstrapTable('removeByUniqueId', item.key);
+                    tablePara.bootstrapTable('insertRow',
+                        {
+                            index: indexNum,
+                            row: {
+                                key: keyData,
+                                value: valueData
+                            }
+                        });
+
+                } else {
+                    tablePara.bootstrapTable('updateByUniqueId',
+                        {
+                            id: keyData,
+                            row: {
+                                value: valueData
+                            }
+                        });
+                }
+            }
+            getParaTbString();
+            $modalPara.modal('hide');
+        };
+
+        function getParaTbString() {
+
+            var tablePara = $("#tb_param");
+            var rows = tablePara.bootstrapTable('getData');
+            if (rows) {
+                var str = JSON.stringify(rows);
+                $("#CallbackParams").val(str);
+            } else {
+                $("#CallbackParams").val("");
+            }
+
+        };
+
+
+        function deleteParaRow(jobName) {
+
+            var index = layer.confirm('确认删除[' + jobName + ']参数吗？',
+                {
+                    btn: ['确认', '取消'] //按钮
+                },
+                function() {
+                    $("#tb_param").bootstrapTable('removeByUniqueId', jobName);
+                    getParaTbString();
+                    layer.close(index);
+                });
+        };
+
+        function addParaShowModal() {
+            $IsAddPara.val("1");
+            $("#txtParaKey").val("");
+            $("#txtParaValue").val("");
+            $modalPara.modal('show');
+        };
+
+        function updateParaShowModal(key, value, index) {
+            $("#txtParaKey").val(key);
+            $("#txtParaValue").val(value);
+            $IsAddPara.val("0");
+            $paraRowIndex.val(index);
+
+            $modalPara.modal('show');
+        };
+
+
+        function getJobViewModal() {
+            $.get("/Job/GetCreateJobView",
+                function (data, status) {
+                    $("#detail_content").html('');
+                    $("#update_content").html('');
+
+                    $("#detail_content").html(data);
+
+                    appcomm.refreshFormValidator($("#job_create_view"));
+
+                    initTableParam();
+                    $("#btn_para_add").click(addParaShowModal);
+
+                    $modal.modal('show');
+                });
+        };
+
+
+        function initTableParam() {
+
+            $("#tb_param").bootstrapTable({
+                toolbar: "#toolbarpara",
+
+                striped: true, //是否显示行间隔色
+                cache: false, //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                pagination: false, //是否显示分页（*）
+                sortable: false, //是否启用排序
+                sortOrder: "asc", //排序方式
+
+                search: false, //是否显示表格搜索，此搜索是客户端搜索，不会进服务端，所以，个人感觉意义不大
+                strictSearch: false,
+                showColumns: false, //是否显示所有的列
+                showRefresh: false, //是否显示刷新按钮
+                minimumCountColumns: 2, //最少允许的列数
+                clickToSelect: false, //是否启用点击选中行
+
+                uniqueId: "key", //每一行的唯一标识，一般为主键列
+                showToggle: false, //是否显示详细视图和列表视图的切换按钮
+                cardView: false, //是否显示详细视图
+                detailView: false, //是否显示父子表 AcadStateText
+
+                columns: [
+                    {
+                        field: 'key',
+                        title: '参数名'
+
+                    }, {
+                        field: 'value',
+                        title: '参数值'
+
+                    },
+                    {
+                        title: '操作',
+                        formatter: paraOpFormatter,
+                        events: paraOpEvents
+                    }
+                ]
+            });
+        };
+
+
+
+        function refreshTable() {
+
+            $table.bootstrapTable('refresh');
+
+        };
+
+        function addJobPost() {
+            var form = $("#job_create_view");
+
+            appcomm.buttonsubmit(form,
+                "/Job/CreateJob",
+                function() { $tbnAddSaveJob.attr("disabled", true) },
+                null,
+                function() {
+                    $modal.modal('hide');
+                    $tbnAddSaveJob.attr("disabled", false);
+                    refreshTable();
+                });
+        };
+
+        $(function() {
+
+            $btnQuery.click(refreshTable);
+
+            $tbnAddSaveJob.click(addJobPost);
+
+            $btnUpdateSave.click(updateJobPost);
+            $btnParaSave.click(paraSave);
+            $btnAdd.click(getJobViewModal);
+
+            initTable();
+
+
+        });
+
+
+    </script>
+}
+

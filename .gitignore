@@ -3,3 +3,7 @@
 ################################################################################
 
 /.vs/Meloht.Quartz.WebManage/v15/Server/sqlite3
+/Meloht.Quartz.JobCore/bin/Debug/netcoreapp2.1
+/Meloht.Quartz.JobCore/obj
+/Meloht.Quartz.WebManage/bin/Debug/netcoreapp2.1
+/Meloht.Quartz.WebManage/obj
