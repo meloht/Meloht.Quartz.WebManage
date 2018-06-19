@@ -41,7 +41,21 @@ namespace Meloht.Quartz.JobCore
             return $"{TriggerNameOncePrefix}_{jobName}";
         }
 
+        public static void SetJobStoreType(JobStoreType jobStoreType)
+        {
+            _jobStoreType = jobStoreType;
+        }
+        public static JobStoreType JobStoreType { get { return _jobStoreType; } }
 
+        private static JobStoreType _jobStoreType;
+
+
+        public static NameValueCollection GetJobConfig()
+        {
+            if (JobStoreType == JobStoreType.AdoJobStore)
+                return GetJobAdoStoreCfg();
+            return GetJobXmlCfg();
+        }
 
         public static NameValueCollection GetJobXmlCfg()
         {

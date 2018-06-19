@@ -31,7 +31,7 @@ namespace Meloht.Quartz.JobCore
 
         private static IScheduler GetScheduler()
         {
-            var properties = JobConfig.GetJobXmlCfg();
+            var properties = JobConfig.GetJobConfig();
 
             ISchedulerFactory sf = new StdSchedulerFactory(properties);
             IScheduler sched = sf.GetScheduler().GetAwaiter().GetResult();
