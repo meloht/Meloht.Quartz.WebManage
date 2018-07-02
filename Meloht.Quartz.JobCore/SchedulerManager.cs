@@ -8,28 +8,18 @@ namespace Meloht.Quartz.JobCore
 {
     public class SchedulerManager
     {
-        private static readonly object Locker = new object();
+       
         static IScheduler _scheduler;
 
         public static IScheduler Instance
         {
             get
             {
-                if (_scheduler == null)
-                {
-                    lock (Locker)
-                    {
-                        if (_scheduler == null)
-                        {
-                            _scheduler = GetScheduler();
-                        }
-                    }
-                }
                 return _scheduler;
             }
         }
 
-        private static IScheduler GetScheduler()
+        internal static IScheduler InitScheduler()
         {
             var properties = JobConfig.GetJobConfig();
 

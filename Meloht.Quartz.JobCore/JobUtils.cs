@@ -174,5 +174,6 @@ namespace Meloht.Quartz.JobCore
             return JobType.Http;
 
         }
+
     }
 }

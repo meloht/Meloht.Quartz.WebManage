@@ -44,6 +44,8 @@ namespace Meloht.Quartz.JobCore
         public static void SetJobStoreType(JobStoreType jobStoreType)
         {
             _jobStoreType = jobStoreType;
+            SchedulerManager.InitScheduler();
+
         }
         public static JobStoreType JobStoreType { get { return _jobStoreType; } }
 

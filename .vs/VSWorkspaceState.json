@@ -1,0 +1,10 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\Meloht.Quartz.JobCore",
+    "\\Meloht.Quartz.WebManage",
+    "\\Meloht.Quartz.WebManage\\Controllers"
+  ],
+  "SelectedNode": "\\Meloht.Quartz.JobCore\\SchedulerManager.cs",
+  "PreviewInSolutionExplorer": false
+}
