@@ -108,11 +108,10 @@ namespace Meloht.Quartz.WebManage.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public JsonResult PauseJob(string jobName)
+        public JsonResult PauseJob(string jobName,string groupName)
         {
-            JobParamHttpModel jobParam = new JobParamHttpModel();
-            jobParam.JobName = jobName;
-            bool bl = _job.PauseJob(jobName, jobParam.JobGroupName);
+
+            bool bl = _job.PauseJob(jobName, groupName);
             if (bl)
             {
                 return BaseJson(MsgCode.Success, "暂停成功");
@@ -125,11 +124,9 @@ namespace Meloht.Quartz.WebManage.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public JsonResult ResumeJob(string jobName)
+        public JsonResult ResumeJob(string jobName, string groupName)
         {
-            JobParamHttpModel jobParam = new JobParamHttpModel();
-            jobParam.JobName = jobName;
-            bool bl = _job.ResumeJob(jobName, jobParam.JobGroupName);
+            bool bl = _job.ResumeJob(jobName, groupName);
             if (bl)
             {
                 return BaseJson(MsgCode.Success, "恢复成功");
@@ -142,11 +139,11 @@ namespace Meloht.Quartz.WebManage.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public JsonResult DeleteJob(string jobName)
+        public JsonResult DeleteJob(string jobName,string groupName)
         {
-            JobParamHttpModel jobParam = new JobParamHttpModel();
-            jobParam.JobName = jobName;
-            bool bl = _job.DeleteJob(jobParam);
+            var model = JobUtils.GetJobParamBase(jobName, groupName);
+
+            bool bl = _job.DeleteJob(model);
             if (bl)
             {
                 return BaseJson(MsgCode.Success, "删除成功");

@@ -270,29 +270,7 @@ namespace Meloht.Quartz.JobCore.Xml
             }
             return false;
         }
-        private static TriggerState GetTriggerState(string triggerName, string triggerGroupName)
-        {
 
-            TriggerKey triggerKey = new TriggerKey(triggerName, triggerGroupName);
-            var triggerState = SchedulerManager.Instance.GetTriggerState(triggerKey).GetAwaiter().GetResult();
-
-            return triggerState;
-        }
-
-        private static int GetTriggerStateValue(TriggerState triggerState)
-        {
-            switch (triggerState)
-            {
-                case TriggerState.None: return -1;
-                case TriggerState.Normal: return 0;
-                case TriggerState.Paused: return 1;
-                case TriggerState.Complete: return 2;
-                case TriggerState.Error: return 3;
-                case TriggerState.Blocked: return 4;
-                default: return -1;
-            }
-
-        }
         public static List<JobViewModel> GetJobList()
         {
             List<JobViewModel> list = new List<JobViewModel>();
@@ -331,8 +309,8 @@ namespace Meloht.Quartz.JobCore.Xml
 
                                 }
 
-                                var state = GetTriggerState(tr.Item.name, tr.Item.group);
-                                model.JobState = GetTriggerStateValue(state);
+                                var state = JobUtils.GetTriggerState(tr.Item.name, tr.Item.group);
+                                model.JobState = JobUtils.GetTriggerStateValue(state);
                             }
 
                         }

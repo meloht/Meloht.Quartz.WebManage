@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using log4net;
 using Meloht.Quartz.JobCore.Model;
 using Quartz;
+using Quartz.Impl.Matchers;
+using Quartz.Impl.Triggers;
 
 namespace Meloht.Quartz.JobCore
 {
@@ -93,12 +96,71 @@ namespace Meloht.Quartz.JobCore
 
         public List<JobViewModel> GetJobList()
         {
-            throw new NotImplementedException();
+            List<JobViewModel> list = new List<JobViewModel>();
+            try
+            {
+                var jobs= _scheduler.GetJobKeys(GroupMatcher<JobKey>.AnyGroup()).GetAwaiter().GetResult().ToList();
+                foreach (var item in jobs)
+                {
+                    var jobDetail = _scheduler.GetJobDetail(item).GetAwaiter().GetResult();
+                  
+                    JobViewModel model = new JobViewModel();
+                    var jobTriggers= _scheduler.GetTriggersOfJob(item).GetAwaiter().GetResult().ToList();
+                    if (jobTriggers.Count > 0)
+                    {
+                        var tr = jobTriggers.First();
+                        if (tr is CronTriggerImpl)
+                        {
+                            var cron = tr as CronTriggerImpl;
+                            model.CronExpression = cron.CronExpressionString;
+                        }
+
+                        var state = JobUtils.GetTriggerState(tr.Key.Name, tr.Key.Group);
+                        model.JobState = JobUtils.GetTriggerStateValue(state);
+
+                    }
+
+                    model.JobType = jobDetail.JobType.ToString();
+                    model.JobData =JobUtils.GetJobDataString(jobDetail.JobDataMap);
+                    model.JobGroupName = jobDetail.Key.Group;
+                    model.JobName = jobDetail.Key.Name;
+                   
+
+                    list.Add(model);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
+            return list;
         }
 
         public List<KeyValueModel> GetJobParaList(string jobName, string jobGroupName)
         {
-            throw new NotImplementedException();
+            List<KeyValueModel> list = new List<KeyValueModel>();
+            try
+            {
+                JobKey jobKey = CreateJobKey(jobName, jobGroupName);
+
+                var jobData = _scheduler.GetJobDetail(jobKey).GetAwaiter().GetResult();
+                if (jobData == null||jobData.JobDataMap==null)
+                    return list;
+
+                foreach (var item in jobData.JobDataMap)
+                {
+                    KeyValueModel model = new KeyValueModel();
+                    model.key = item.Key;
+                    model.value = item.Value.ToString();
+                    list.Add(model);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
+
+            return list;
         }
 
         public bool ModifyJobCron(JobParamBaseModel job)
@@ -201,7 +263,33 @@ namespace Meloht.Quartz.JobCore
 
         public bool UpdateHttpJob(JobParamHttpModel job)
         {
-            throw new NotImplementedException();
+            try
+            {
+                JobKey jobKey = CreateJobKey(job.JobName, job.JobGroupName);
+                var jobData = _scheduler.GetJobDetail(jobKey).GetAwaiter().GetResult();
+                JobDataModel model = new JobDataModel();
+                model.CallbackUrl = jobData.JobDataMap[JobConfig.CallbackUrl].ToString();
+                model.CallbackParams = JobUtils.GetDictFromString(jobData.JobDataMap[JobConfig.CallbackParams].ToString());
+
+                bool isSameParams = IsSameParam(job, model);
+                if (isSameParams)
+                {
+                    return ModifyJobCron(job);
+                }
+                else
+                {
+                    bool bl = DeleteJob(job);
+                    if (bl)
+                    {
+                        return AddHttpJob(job);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
+            return false;
         }
     }
 }

@@ -206,10 +206,10 @@
 
         window.actionEvents = {
             'click .stopjob': function(e, value, row) {
-                stopJob(row.jobName);
+                stopJob(row.jobName, row.jobGroupName);
             },
             'click .resumejob': function(e, value, row) {
-                resumeJob(row.jobName);
+                resumeJob(row.jobName, row.jobGroupName);
             },
             'click .updatejob': function(e, value, row) {
 
@@ -217,7 +217,7 @@
 
             },
             'click .deletejob': function(e, value, row) {
-                deleteJob(row.jobName);
+                deleteJob(row.jobName, row.jobGroupName);
             },
             'click .runatoncejob': function(e, value, row) {
                 runOnceTime(row.jobName, row.jobGroupName);
@@ -235,24 +235,25 @@
             return temp;
         };
 
-        function getPostData(jobname) {
+        function getPostData(jobname,groupName) {
             //获取防伪标记
             var token = getToken();
             var data = {
                 "__RequestVerificationToken": token,
-                jobName: jobname
+                jobName: jobname,
+                groupName: groupName
             };
 
             return data;
         };
 
-        function stopJob(jobname) {
+        function stopJob(jobname, groupName) {
             var index = layer.confirm('确认要暂停任务[' + jobname + ']吗？',
                 {
                     btn: ['确认', '取消'] //按钮
                 },
                 function() {
-                    var data = getPostData(jobname);
+                    var data = getPostData(jobname, groupName);
                     appcomm.ajaxSubmit("/Job/PauseJob",
                         data,
                         null,
@@ -264,7 +265,7 @@
                 });
         };
 
-        function resumeJob(jobname) {
+        function resumeJob(jobname, groupName) {
             var index = layer.confirm('确认要恢复任务[' + jobname + ']吗？',
                 {
                     btn: ['确认', '取消'] //按钮
@@ -282,13 +283,13 @@
                 });
         };
 
-        function deleteJob(jobname) {
+        function deleteJob(jobname, groupName) {
             var index = layer.confirm('确认要删除任务[' + jobname + ']吗？',
                 {
                     btn: ['确认', '取消'] //按钮
                 },
                 function() {
-                    var data = getPostData(jobname);
+                    var data = getPostData(jobname, groupName);
                     appcomm.ajaxSubmit("/Job/DeleteJob",
                         data,
                         null,
@@ -307,11 +308,7 @@
                 },
                 function () {
                     var token = getToken();
-                    var data = {
-                        "__RequestVerificationToken": token,
-                        jobName: jobname,
-                        groupName: groupname
-                    };
+                    var data = getPostData(jobname, groupName);
 
                     appcomm.ajaxSubmit("/Job/RunAtOnce",
                         data,

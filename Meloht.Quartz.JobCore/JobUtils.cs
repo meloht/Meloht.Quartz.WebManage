@@ -174,6 +174,45 @@ namespace Meloht.Quartz.JobCore
             return JobType.Http;
 
         }
+        public static TriggerState GetTriggerState(string triggerName, string triggerGroupName)
+        {
+
+            TriggerKey triggerKey = new TriggerKey(triggerName, triggerGroupName);
+            var triggerState = SchedulerManager.Instance.GetTriggerState(triggerKey).GetAwaiter().GetResult();
+
+            return triggerState;
+        }
+
+        public static int GetTriggerStateValue(TriggerState triggerState)
+        {
+            switch (triggerState)
+            {
+                case TriggerState.None: return -1;
+                case TriggerState.Normal: return 0;
+                case TriggerState.Paused: return 1;
+                case TriggerState.Complete: return 2;
+                case TriggerState.Error: return 3;
+                case TriggerState.Blocked: return 4;
+                default: return -1;
+            }
+
+        }
+
+        public static JobParamBaseModel GetJobParamBase(string jobName,string jobGroupName)
+        {
+            if (jobGroupName.Contains(JobConfig.JobGroupNameHttp))
+            {
+                JobParamHttpModel model = new JobParamHttpModel();
+                model.JobName = jobName;
+                return model;
+            }
+            else
+            {
+                JobParamAssemblyModel model = new JobParamAssemblyModel();
+                model.JobName = jobName;
+                return model;
+            }
+        }
 
     }
 }

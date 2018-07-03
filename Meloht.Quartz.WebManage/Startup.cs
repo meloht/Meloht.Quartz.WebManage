@@ -61,7 +61,7 @@ namespace Meloht.Quartz.WebManage
                     name: "default",
                     template: "{controller=Job}/{action=JobListIndex}/{id?}");
             });
-            JobConfig.SetJobStoreType(JobStoreType.RAMJobStore);
+            JobConfig.SetJobStoreType(JobStoreType.AdoJobStore);
             JobManger.RunJob();
         }
     }

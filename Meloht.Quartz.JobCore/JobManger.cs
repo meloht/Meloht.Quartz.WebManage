@@ -18,7 +18,7 @@ namespace Meloht.Quartz.JobCore
      
         public JobManger()
         {
-            _jobStore = new JobStoreRAM();
+            _jobStore = SchedulerManager.JobFactory();
         }
 
         public static bool RunJob()
